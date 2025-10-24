@@ -1,34 +1,43 @@
 use anchor_lang::prelude::*;
 
-declare_id!("C7kmTo8Bxoq844esi4ppL4mLXoBG71LHvHG4UHvHWqv5");
+declare_id!("31iJhWP8otk23zeVnbHAupRfPu8apKh3QpwwB4TYhTGu");
 
 #[program]
-pub mod anchor_counter_program {
+pub mod solana_counter_program {
     use super::*;
 
-    pub fn hello(_ctx: Context<Hello>) -> Result<()> {
+    pub fn initialize_counter(_ctx: Context<InitializeCounter>) -> Result<()> {
+        Ok(())
+    }
 
-        msg!("Hello World"); 
-
-        msg!("Our program's Program ID: {}", &id());
-
-        let mut counter = 0; 
-
-        let result = loop {
-            counter += 1; 
-            msg!("Current Count is: {counter}");
-            
-
-            if counter >= 10 {
-                break counter; 
-            }
-        };
-
-        msg!("The Final Count is {result}");
-
+    pub fn increment(ctx: Context<Increment>) -> Result<()> {
+        ctx.accounts.counter.count = ctx.accounts.counter.count.checked_add(1).unwrap(); 
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct Hello{}
+pub struct InitializeCounter<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(
+        init, 
+        space = 8 + Counter::INIT_SPACE, 
+        payer = payer 
+    )]
+    pub counter: Account<'info, Counter>, 
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Increment<'info> {
+    #[account(mut)]
+    pub counter: Account<'info, Counter>,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct Counter {
+    count: u64,
+}
